@@ -3,9 +3,9 @@ const currentNodeUrl = process.argv[3];
 
 function Blockchain() {
   this.chain = [];
-  this.pending_bets = [];
-  this.current_node_url = currentNodeUrl;
-  this.network_nodes = []; // all nodes in the network
+  this.pendingBets = [];
+  this.currentNodeUrl = currentNodeUrl;
+  this.networkNodes = []; // all nodes in the network
   
   // creating genesis block
    this.createNewBlock(100, "0", "0");
@@ -18,10 +18,10 @@ Blockchain.prototype.createNewBlock = function(nonce, previousBlockHash, hash) {
     bets: this.pendingBets,
     nonce: nonce,
     hash: hash,
-    previous_block_hash: previousBlockHash
+    previousBlockHash: previousBlockHash
   };
 
-  this.pending_bets = [];
+  this.pendingBets = [];
   this.chain.push(newBlock);
 
   return newBlock;
@@ -38,8 +38,8 @@ Blockchain.prototype.createNewBet = function (playerName, matchId, teamOneScore,
     matchId: matchId
   };
 
-  newBet["team_one_score"] = teamOneScore;
-  newBet["team_two_score"] = teamTwoScore;
+  newBet["teamOneScore"] = teamOneScore;
+  newBet["teamTwoScore"] = teamTwoScore;
 
   return newBet;
 };
@@ -80,14 +80,14 @@ Blockchain.prototype.chainIsValid = function(blockchain) {
       return false;
     }
 
-    if (currentBlock["previous_block_hash"] !== prevBlock["hash"]) {
+    if (currentBlock["previousBlockHash"] !== prevBlock["hash"]) {
       return false;
     }
   }
 
   const genesisBlock = blockchain[0];
   const correctNonce = genesisBlock["nonce"] === 100;
-  const correctPreviousBlockHash = genesisBlock["previous_block_hash"] === "0";
+  const correctPreviousBlockHash = genesisBlock["previousBlockHash"] === "0";
   const correctHash = genesisBlock["hash"] === "0";
   const correctBets = genesisBlock["bets"].length === 0;
 

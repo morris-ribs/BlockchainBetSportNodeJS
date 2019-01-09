@@ -34,8 +34,9 @@ app.post("/bet", function (req, res) {
 
 // broadcast a new bet 
 app.post("/bet/broadcast", function (req, res) {
-    const newBet = blockchain.createNewBet(req.body.playerName, req.body.matchId, req.body.teamOneScore,
-        req.body.teamTwoScore);
+    const obj = Object.keys(req.body).length === 1 ? JSON.parse(Object.keys(req.body)[0]) : req.body;
+    const newBet = blockchain.createNewBet(obj.playername, obj.matchid, obj.teamonescore,
+        obj.teamtwoscore);
     blockchain.addBetToPendingBets(newBet);
     
     const requestPromises = [];
@@ -62,7 +63,7 @@ app.get("/mine", function (req, res) {
     const lastBlock = blockchain.getLastBlock();
     const previousBlockHash = lastBlock["hash"];
     const currentBlockData = {
-        bets: blockchain.pending_bets,
+        bets: blockchain.pendingBets,
         index: lastBlock["index"] - 1
     };
 
@@ -91,12 +92,12 @@ app.get("/mine", function (req, res) {
 app.post("/receive-new-block", function (req, res) {
     const newBlock = req.body.newBlock;
     const lastBlock = blockchain.getLastBlock();
-    const correctHash = lastBlock.hash === newBlock.previous_block_hash;
+    const correctHash = lastBlock.hash === newBlock.previousBlockHash;
     const correctIndex = lastBlock["index"] + 1 === newBlock["index"];
 
     if (correctHash && correctIndex) {
         blockchain.chain.push(newBlock);
-        blockchain.pending_bets = [];
+        blockchain.pendingBets = [];
 
         res.json({
             note: "New block received and accepted.",
@@ -113,8 +114,8 @@ app.post("/receive-new-block", function (req, res) {
 // register and broadcast node
 app.post("/register-and-broadcast-node", function (req, res) {
     const newNodeUrl = req.body.newNodeUrl;
-    if (blockchain.network_nodes.indexOf(newNodeUrl) == -1) {
-        blockchain.network_nodes.push(newNodeUrl);
+    if (blockchain.networkNodes.indexOf(newNodeUrl) == -1) {
+        blockchain.networkNodes.push(newNodeUrl);
     }
     
     const regNodesPromises = [];
@@ -133,7 +134,7 @@ app.post("/register-and-broadcast-node", function (req, res) {
         const bulkRegisterOptions = {
             uri: newNodeUrl + "/register-nodes-bulk",
             method: "POST",
-            body: { allNetworkNodes: [ ...blockchain.network_nodes, blockchain.current_node_url ] },
+            body: { allNetworkNodes: [ ...blockchain.networkNodes, blockchain.currentNodeUrl ] },
             json: true
         };
 
@@ -147,10 +148,10 @@ app.post("/register-and-broadcast-node", function (req, res) {
 // register a single node
 app.post("/register-node", function (req, res) {
     const newNodeUrl = req.body.newNodeUrl;
-    const nodeNotAlreadyPresent = blockchain.network_nodes.indexOf(newNodeUrl) == -1;
-    const notCurrentNode = blockchain.current_node_url !== newNodeUrl;
+    const nodeNotAlreadyPresent = blockchain.networkNodes.indexOf(newNodeUrl) == -1;
+    const notCurrentNode = blockchain.currentNodeUrl !== newNodeUrl;
     if (nodeNotAlreadyPresent && notCurrentNode) {
-        blockchain.network_nodes.push(newNodeUrl);
+        blockchain.networkNodes.push(newNodeUrl);
     }
     res.json({ note: "New node registered successfully." });
 });
@@ -159,10 +160,10 @@ app.post("/register-node", function (req, res) {
 app.post("/register-nodes-bulk", function (req, res) {
     const allNetworkNodes = req.body.allNetworkNodes;
     allNetworkNodes.forEach(networkNodeUrl => {
-        const nodeNotAlreadyPresent = blockchain.network_nodes.indexOf(networkNodeUrl) == -1;
-        const notCurrentNode = blockchain.current_node_url !== networkNodeUrl;
+        const nodeNotAlreadyPresent = blockchain.networkNodes.indexOf(networkNodeUrl) == -1;
+        const notCurrentNode = blockchain.currentNodeUrl !== networkNodeUrl;
         if (nodeNotAlreadyPresent && notCurrentNode) {
-            blockchain.network_nodes.push(networkNodeUrl);
+            blockchain.networkNodes.push(networkNodeUrl);
         }
     });
     res.json({ note: "Bulk registration successful." });
@@ -191,7 +192,7 @@ app.get("/consensus", function (req, res) {
             if (blockchain.chain.length > maxChainLength) {
                 maxChainLength = blockchain.chain.length;
                 newLongestChain = blockchain.chain;
-                newPendingBets = blockchain.pending_bets;
+                newPendingBets = blockchain.pendingBets;
             }
         });
 
@@ -238,6 +239,10 @@ app.get("/player/:playerName", function(req, res) {
     });
 });
 
+
+app.get("/block-explorer", function (req, res) {
+    res.sendFile("./block-explorer/index.html", { root: __dirname });
+});
 
 // bind
 app.listen(port, () => {
