@@ -1,12 +1,11 @@
 const sha256 = require("sha256");
-const uuid = require("uuid/v1");
 const currentNodeUrl = process.argv[3];
 
 function Blockchain() {
   this.chain = [];
-  this.pendingBets = [];
-  this.currentNodeUrl = currentNodeUrl;
-  this.networkNodes = []; // all nodes in the network
+  this.pending_bets = [];
+  this.current_node_url = currentNodeUrl;
+  this.network_nodes = []; // all nodes in the network
   
   // creating genesis block
    this.createNewBlock(100, "0", "0");
@@ -19,10 +18,10 @@ Blockchain.prototype.createNewBlock = function(nonce, previousBlockHash, hash) {
     bets: this.pendingBets,
     nonce: nonce,
     hash: hash,
-    previousBlockHash: previousBlockHash
+    previous_block_hash: previousBlockHash
   };
 
-  this.pendingBets = [];
+  this.pending_bets = [];
   this.chain.push(newBlock);
 
   return newBlock;
@@ -36,12 +35,11 @@ Blockchain.prototype.getLastBlock = function() {
 Blockchain.prototype.createNewBet = function (playerName, matchId, teamOneScore, teamTwoScore) {
   const newBet = {
     player: playerName, 
-    matchId: matchId, 
-    betId: uuid().split("-").join("")
+    matchId: matchId
   };
 
-  newBet["teamOne"] = teamOneScore;
-  newBet["teamTwo"] = teamTwoScore;
+  newBet["team_one_score"] = teamOneScore;
+  newBet["team_two_score"] = teamTwoScore;
 
   return newBet;
 };
@@ -82,14 +80,14 @@ Blockchain.prototype.chainIsValid = function(blockchain) {
       return false;
     }
 
-    if (currentBlock["previousBlockHash"] !== prevBlock["hash"]) {
+    if (currentBlock["previous_block_hash"] !== prevBlock["hash"]) {
       return false;
     }
   }
 
   const genesisBlock = blockchain[0];
   const correctNonce = genesisBlock["nonce"] === 100;
-  const correctPreviousBlockHash = genesisBlock["previousBlockHash"] === "0";
+  const correctPreviousBlockHash = genesisBlock["previous_block_hash"] === "0";
   const correctHash = genesisBlock["hash"] === "0";
   const correctBets = genesisBlock["bets"].length === 0;
 
@@ -116,7 +114,7 @@ Blockchain.prototype.getBetsForMatch = function(matchId) {
   const matchBets = [];
   this.chain.forEach(block => {
     block.bets.forEach(bet => {
-      if (bet.matchId === matchId) {
+      if (bet.match_id === matchId) {
         matchBets.push(bet);
       }
     });
